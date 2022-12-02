@@ -1,10 +1,10 @@
 #include <raylib.h>
 
+#include <inttypes.h>
 #include <math.h>
 #include <memory.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <inttypes.h>
+#include <stdlib.h>
 
 /* CONSTANTS */
 
@@ -18,140 +18,193 @@
 
 /* STRUCTS */
 
-typedef enum {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT
+typedef enum Direction
+{
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT
 } Direction;
 
-typedef struct {
-    int width, height;
-    int** nums;
+typedef struct
+{
+  int width, height;
+  int** nums;
 } Board;
 /* FUNCS */
 
-void randomize_board(int** board, int w, int h);
-void move(int** board, int w, int h, Direction dir);
+void randomize_board(Board* board);
+void move(Board* board, Direction dir);
 
 // char* int_to_string(int i);
-void shuffle(int** arr, int n);
+void shuffle(int* arr, int n);
 
 int** allocate_integer_matrix(int w, int h);
 void free_integer_matrix(int** matrix, int r);
 
 /* MAIN */
 
-int main() {
-    // SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT, WINDOW_TITLE);
+int main()
+{
+  // SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  InitWindow(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT, WINDOW_TITLE);
 
-    const char* NUM_TO_STRING_MAP = {
-        "1\0",
-        "2\0",
-        "3\0",
-        "4\0",
-        "5\0",
-        "6\0",
-        "7\0",
-        "8\0",
-        "9\0",
-        "10\0",
-        "11\0",
-        "12\0",
-        "13\0",
-        "14\0",
-        "15\0",
-        "16\0",
-    };
+  char* NUM_TO_STRING_MAP[17] = {
+    "0", "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",
+    "9", "10", "11", "12", "13", "14", "15", "16",
+  };
 
-    Board board = (Board) {
-        4, 4,
-        allocate_integer_matrix(4, 4)
-    };
+  Board board = (Board){ 4, 4, allocate_integer_matrix(4, 4) };
 
-    // randomize_board(board.nums, board.width, board.height);
+  randomize_board(&board);
 
-    int cell_width, cell_height;
-    const int PADDING = 2;
+  int cell_width, cell_height;
+  const int PADDING = 2;
 
-    cell_width = (GetScreenWidth() - PADDING - board.width * PADDING) / board.width;
-    cell_height = (GetScreenHeight() - PADDING - board.height * PADDING) / board.height;
+  cell_width =
+    (GetScreenWidth() - PADDING - board.width * PADDING) / board.width;
+  cell_height =
+    (GetScreenHeight() - PADDING - board.height * PADDING) / board.height;
 
-    while(!WindowShouldClose()) {
-        ClearBackground(LIGHTGRAY);
+  while (!WindowShouldClose()) {
+    ClearBackground(LIGHTGRAY);
 
-        BeginDrawing();
+    if (IsKeyPressed(KEY_RIGHT))
+      move(&board, RIGHT);
+    else if (IsKeyPressed(KEY_LEFT))
+      move(&board, LEFT);
+    else if (IsKeyPressed(KEY_UP))
+      move(&board, UP);
+    else if (IsKeyPressed(KEY_DOWN))
+      move(&board, DOWN);
 
-        for(int i = 0; i < board.height; i++) {
-            for(int j = 0; j < board.width; j++) {
-                int x = (i + 1) * PADDING + cell_width  * i;
-                int y = (j + 1) * PADDING + cell_height * j;
+    BeginDrawing();
 
-                DrawRectangle(
-                    x, y,
-                    cell_width, cell_height,
-                    GRAY
-                );
+    for (int i = 0; i < board.height; i++) {
+      for (int j = 0; j < board.width; j++) {
+        int x = (j + 1) * PADDING + cell_width * j;
+        int y = (i + 1) * PADDING + cell_height * i;
 
-                printf("i: %d, j: %d\n", i, j);
+        DrawRectangle(x, y, cell_width, cell_height, GRAY);
 
-                printf("Board[%d, %d] = %d\n", i, j, board.nums[i][j]);
-                printf("\t-> To String: %s\n", NUM_TO_STRING_MAP[board.nums[i][j]]);
-                printf("----\n");
-            }
-        }
+        // printf("Board[%d, %d] = %d\n", i, j, board.nums[i][j]);
+        // printf("\t-> To String: %s\n", str_num);
+        // printf("----\n");
 
-        EndDrawing(); // end drawing + swap + poll events
+        if (board.nums[i][j] == 0)
+          continue;
+        const char* str_num = NUM_TO_STRING_MAP[board.nums[i][j]];
+        DrawText(str_num, x, y, cell_height * 0.6, BLACK);
+      }
     }
 
-    CloseWindow();
+    EndDrawing(); // end drawing + swap + poll events
+  }
+
+  CloseWindow();
 }
 
 /* IMPL */
 
-void randomize_board(int** board, int w, int h) {
-    int max_num = w * h - 1;
+void randomize_board(Board* b)
+{
+  int max_num = b->width * b->height - 1;
+  int bucket[max_num];
+  for (int i = 0; i < max_num; i++) {
+    bucket[i] = i + 1;
+    printf("bucket[%d] = %d\n", i, i + 1);
+  }
 
-    int bucket[max_num];
-    memset(bucket, 0, max_num * sizeof(int));
-    // Equivalente -> for(int i = 0; i < max_num; i++) bucket[i] = 0;
+  shuffle(bucket, max_num);
 
-    for(int i = 0; i < max_num; i++) {
-        int num = 0;
-        do {
-            num = GetRandomValue(1, max_num);
-        } while(bucket[num] != 0);
-        bucket[num] = 1;
-
-        int i = floor(num / w);
-        int j = num % w;
-
-        board[i][j] = num;
-    }
-
+  for (int i = 0; i < max_num; i++) {
+    int x         = floor(i / b->width);
+    int y         = i % b->width;
+    b->nums[x][y] = bucket[i];
+  }
+  b->nums[b->width - 1][b->height - 1] = 0;
 }
 
-void move(int** board, int w, int h, Direction dir);
+void move(Board* board, Direction dir)
+{
+  printf("Called MOVE with direction %d\n", dir);
+  switch (dir) {
+    case UP: {
+      printf("UP!\n");
+      for (int column = 0; column < board->width - 1; column++) {
+        for (int row = 0; row < board->height - 1; row++) {
+          if (board->nums[row][column] == 0) {
+            board->nums[row][column]     = board->nums[row + 1][column];
+            board->nums[row + 1][column] = 0;
+          }
+        }
+      }
 
-void shuffle(int* arr, int n) {
-    for(int i = 0; i < n-1; i++) {
-        int random = GetRandomValue(0, i);
-        int temp = arr[i];
+      break;
     }
+    case DOWN: {
+      printf("Down!\n");
+      for (int column = 0; column < board->width; column++) {
+        for (int row = board->height - 1; row < 0; row--) {
+          if (board->nums[row][column] == 0) {
+            board->nums[row][column]     = board->nums[row - 1][column];
+            board->nums[row - 1][column] = 0;
+          }
+        }
+      }
+      break;
+    }
+    case LEFT: {
+      printf("Left!\n");
+      for (int row = 0; row < board->height; row++) {
+        for (int column = 0; column < board->width - 1; column++) {
+          if (board->nums[row][column] == 0) {
+            board->nums[row][column]     = board->nums[row][column + 1];
+            board->nums[row][column + 1] = 0;
+          }
+        }
+      }
+      break;
+    }
+    case RIGHT: {
+      printf("RIGht!\n");
+      for (int row = 0; row < board->height; row++) {
+        for (int column = board->width - 1; column > 0; column--) {
+          if (board->nums[row][column] == 0) {
+            board->nums[row][column]     = board->nums[row][column - 1];
+            board->nums[row][column - 1] = 0;
+          }
+        }
+      }
+      break;
+    }
+  }
 }
 
-int** allocate_integer_matrix(int w, int h) {
-    int** matrix = (int**) malloc(h * sizeof(int));
-    for(; h > 0 ; h--) {
-        matrix[h - 1] = (int*) malloc(w * sizeof(int));
-    }
-    return matrix;
+void shuffle(int* arr, int n)
+{
+  for (int i = 0; i < n; i++) {
+    int to_swap_index = (i + GetRandomValue(0, n - i)) % n;
+
+    int temp           = arr[i];
+    arr[i]             = arr[to_swap_index];
+    arr[to_swap_index] = temp;
+  }
 }
 
-void free_integer_matrix(int** matrix, int r) {
-    for(; r > 0 ; r-- ) {
-        free(matrix[r]);
-    }
-    free(matrix);
+int** allocate_integer_matrix(int w, int h)
+{
+  int** matrix = (int**) malloc(h * sizeof(int));
+  for (; h > 0; h--) {
+    matrix[h - 1] = (int*) malloc(w * sizeof(int));
+  }
+  return matrix;
+}
+
+void free_integer_matrix(int** matrix, int r)
+{
+  for (; r > 0; r--) {
+    free(matrix[r]);
+  }
+  free(matrix);
 }
