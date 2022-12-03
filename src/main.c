@@ -108,8 +108,10 @@ int main()
 
 void randomize_board(Board* b)
 {
+  int x, y;
   int max_num = b->width * b->height - 1;
   int bucket[max_num];
+
   for (int i = 0; i < max_num; i++) {
     bucket[i] = i + 1;
     printf("bucket[%d] = %d\n", i, i + 1);
@@ -118,20 +120,19 @@ void randomize_board(Board* b)
   shuffle(bucket, max_num);
 
   for (int i = 0; i < max_num; i++) {
-    int x         = floor(i / b->width);
-    int y         = i % b->width;
+    x         = floor(i / b->width);
+    y         = i % b->width;
     b->nums[x][y] = bucket[i];
   }
   b->nums[b->width - 1][b->height - 1] = 0;
 }
 
+
 void move(Board* board, Direction dir)
 {
-  printf("Called MOVE with direction %d\n", dir);
   switch (dir) {
     case UP: {
-      printf("UP!\n");
-      for (int column = 0; column < board->width - 1; column++) {
+      for (int column = 0; column < board->width; column++) {
         for (int row = 0; row < board->height - 1; row++) {
           if (board->nums[row][column] == 0) {
             board->nums[row][column]     = board->nums[row + 1][column];
@@ -143,9 +144,8 @@ void move(Board* board, Direction dir)
       break;
     }
     case DOWN: {
-      printf("Down!\n");
       for (int column = 0; column < board->width; column++) {
-        for (int row = board->height - 1; row < 0; row--) {
+        for (int row = board->height - 1; row > 0; row--) {
           if (board->nums[row][column] == 0) {
             board->nums[row][column]     = board->nums[row - 1][column];
             board->nums[row - 1][column] = 0;
@@ -155,7 +155,6 @@ void move(Board* board, Direction dir)
       break;
     }
     case LEFT: {
-      printf("Left!\n");
       for (int row = 0; row < board->height; row++) {
         for (int column = 0; column < board->width - 1; column++) {
           if (board->nums[row][column] == 0) {
@@ -167,7 +166,6 @@ void move(Board* board, Direction dir)
       break;
     }
     case RIGHT: {
-      printf("RIGht!\n");
       for (int row = 0; row < board->height; row++) {
         for (int column = board->width - 1; column > 0; column--) {
           if (board->nums[row][column] == 0) {
@@ -176,6 +174,7 @@ void move(Board* board, Direction dir)
           }
         }
       }
+
       break;
     }
   }
@@ -183,10 +182,12 @@ void move(Board* board, Direction dir)
 
 void shuffle(int* arr, int n)
 {
-  for (int i = 0; i < n; i++) {
-    int to_swap_index = (i + GetRandomValue(0, n - i)) % n;
+  int to_swap_index, temp;
 
-    int temp           = arr[i];
+  for (int i = 0; i < n; i++) {
+    to_swap_index = (i + GetRandomValue(0, n - i)) % n;
+
+    temp               = arr[i];
     arr[i]             = arr[to_swap_index];
     arr[to_swap_index] = temp;
   }
@@ -195,9 +196,11 @@ void shuffle(int* arr, int n)
 int** allocate_integer_matrix(int w, int h)
 {
   int** matrix = (int**) malloc(h * sizeof(int));
+
   for (; h > 0; h--) {
     matrix[h - 1] = (int*) malloc(w * sizeof(int));
   }
+
   return matrix;
 }
 
@@ -206,5 +209,53 @@ void free_integer_matrix(int** matrix, int r)
   for (; r > 0; r--) {
     free(matrix[r]);
   }
+
   free(matrix);
 }
+
+/*TODO: Check this out in the future 
+void move(Board* board, Direction dir) {
+  // Assumes RIGHT & DOWN
+  int startingX, startingY;
+  int dirX, dirY;
+
+  switch (dir) {
+  case LEFT:
+    startingX = board->width;
+    startingY = 0;
+    dirX = -1;
+    dirY = 0; 
+    break;
+  case RIGHT:
+    startingX = 0;
+    startingY = 0;
+    dirX = 1;
+    dirY = 0; 
+    break;
+  case DOWN:
+    startingX = 0;
+    startingY = board->height;
+    dirX = 0;
+    dirY = 1; 
+    break;
+  case UP:
+    startingX = 0;
+    startingY = 0;
+    dirX = 0;
+    dirY = -1;
+  }
+
+  for(int col = 0; col < board->width; col++) {
+    for(int row = 0; row < board->height; row++) {
+      if(board->nums[row][col] == 0) {
+        board->nums[row][col] = board->nums[row + dirY][col + dirX];
+        board->nums[row += dirY][col += dirX] = 0;
+
+        if(row < 0 || col < 0 || row >= board->height || col >= board->width)
+          goto END;
+      }
+    }
+  }
+END:
+}
+*/
